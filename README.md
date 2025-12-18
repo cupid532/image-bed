@@ -1,254 +1,182 @@
-# 图床系统部署文档
+# 图床系统 (Image Hosting System)
 
-## 项目概述
+<div align="center">
 
-这是一个基于 Django 的图床系统，支持图片上传、管理、压缩和认证功能。
+一个功能完整的自托管图床系统，基于 Django 构建。
 
-### 主要特性
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://www.djangoproject.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://www.docker.com/)
 
-- 📤 **多图上传**: 支持拖拽、粘贴、批量上传
-- 🔐 **Token 认证**: API Token 认证保护上传接口
-- 🗜️ **图片压缩**: 自动压缩图片，节省存储空间
-- 📊 **图片管理**: 查看、删除、统计浏览量
-- 🎨 **美观界面**: 现代化 UI 设计
-- 🔄 **去重机制**: 基于文件哈希自动去重
-- 🚀 **高性能**: Nginx + Gunicorn + Docker 部署
+[功能特性](#功能特性) • [快速开始](#快速开始) • [配置说明](#配置说明) • [文档](#文档) • [许可证](#许可证)
+
+</div>
 
 ---
 
-## 系统要求
+## 功能特性
 
-- **操作系统**: Debian 12 (或其他 Linux 发行版)
-- **Docker**: 20.10+
-- **Docker Compose**: 2.0+
-- **域名**: tc.bluse.me (已解析到服务器)
+### 核心功能
+
+- 📤 **多种上传方式**
+  - 拖拽上传
+  - 粘贴上传 (Ctrl+V)
+  - 批量上传
+  - API 上传
+
+- 🔐 **安全认证**
+  - Token 认证保护
+  - 多 Token 管理
+  - 使用统计
+
+- 🗜️ **图片优化**
+  - 自动压缩
+  - 尺寸限制
+  - 智能去重 (基于 SHA256)
+
+- 📊 **图片管理**
+  - Web 图片库
+  - 浏览量统计
+  - 一键删除
+  - 分页浏览
+
+- 🎨 **现代化界面**
+  - 响应式设计
+  - 实时上传进度
+  - 一键复制链接
+
+### 技术特性
+
+- ✅ 支持任意域名
+- ✅ 多域名配置
+- ✅ HTTP/HTTPS 自动适配
+- ✅ Docker 一键部署
+- ✅ Nginx 高性能服务
+- ✅ 完整的 API 接口
 
 ---
 
 ## 快速开始
 
-### 1. 安装 Docker 和 Docker Compose
+### 环境要求
+
+- Docker 20.10+
+- Docker Compose 2.0+
+- 域名 (可选，可使用 IP)
+
+### 一键部署
 
 ```bash
-# 更新系统
-sudo apt update && sudo apt upgrade -y
+# 1. 克隆项目
+git clone https://github.com/cupid532/image-bed.git
+cd image-bed
 
-# 安装 Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# 安装 Docker Compose
-sudo apt install docker-compose-plugin -y
-
-# 将当前用户加入 docker 组
-sudo usermod -aG docker $USER
-
-# 重新登录以使组权限生效
-```
-
-### 2. 准备项目文件
-
-```bash
-# 上传项目到服务器
-cd /root
-# 假设你已将项目文件上传到 /root/image_bed
-
-cd image_bed
-```
-
-### 3. 配置环境变量
-
-```bash
-# 复制环境变量模板
+# 2. 配置域名
 cp .env.example .env
+nano .env  # 修改 ALLOWED_HOSTS 为你的域名
 
-# 编辑环境变量
-nano .env
+# 3. 一键部署
+chmod +x deploy.sh
+sudo ./deploy.sh
 ```
 
-**重要: 请修改以下配置**
+部署脚本会自动：
+- 安装 Docker 和 Docker Compose
+- 生成安全的密钥和 Token
+- 创建必要的目录
+- 启动所有服务
+- 初始化数据库
 
-```bash
-# 生成安全的 SECRET_KEY
-SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
+### 访问系统
 
-# 生成 API Token
-API_TOKEN=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
-
-# 修改 .env 文件
-SECRET_KEY=<生成的SECRET_KEY>
-API_TOKEN=<生成的API_TOKEN>
-DEBUG=False
-ALLOWED_HOSTS=tc.bluse.me,localhost,127.0.0.1
-REQUIRE_AUTH=True
-```
-
-### 4. 准备数据目录
-
-```bash
-# 确保 /data 目录存在并有正确权限
-sudo mkdir -p /data
-sudo chown -R 1000:1000 /data
-sudo chmod 755 /data
-```
-
-### 5. 初始配置 (HTTP Only)
-
-首次部署时，先使用 HTTP 配置，稍后再添加 SSL。
-
-```bash
-# 备份原始配置
-mv nginx/conf.d/default.conf nginx/conf.d/default-https.conf.bak
-
-# 使用 HTTP 配置
-cp nginx/conf.d/default-http-only.conf nginx/conf.d/default.conf
-```
-
-### 6. 启动服务
-
-```bash
-# 构建并启动容器
-docker compose up -d --build
-
-# 查看日志
-docker compose logs -f
-
-# 等待服务启动完成
-```
-
-### 7. 初始化数据库
-
-```bash
-# 进入 web 容器
-docker compose exec web bash
-
-# 运行数据库迁移
-python manage.py migrate
-
-# 创建超级管理员
-python manage.py createsuperuser
-
-# 退出容器
-exit
-```
-
-### 8. 测试访问
-
-访问 `http://tc.bluse.me`，你应该能看到上传页面。
+部署完成后，访问 `http://your-domain.com` 即可使用。
 
 ---
 
-## 配置 SSL 证书
+## 配置说明
 
-### 使用 Certbot 获取 Let's Encrypt 证书
+### 基础配置
+
+编辑 `.env` 文件：
+
+```bash
+# 必须修改
+SECRET_KEY=your-secret-key          # Django 密钥
+API_TOKEN=your-api-token            # 上传 Token
+ALLOWED_HOSTS=your-domain.com,localhost
+
+# 可选配置
+MAX_UPLOAD_SIZE=10485760            # 最大上传大小 (10MB)
+ENABLE_IMAGE_COMPRESSION=True       # 启用压缩
+COMPRESSION_QUALITY=85              # 压缩质量
+MAX_IMAGE_DIMENSION=4096            # 最大尺寸
+```
+
+### 目录结构
+
+```
+/data/image_bed/
+├── images/              # 图片存储
+├── db/                  # 数据库
+├── certbot/             # SSL 证书
+└── certbot-www/         # Let's Encrypt 验证
+```
+
+### SSL 证书 (可选)
 
 ```bash
 # 安装 Certbot
 sudo apt install certbot -y
 
-# 停止 Nginx (临时)
-docker compose stop nginx
-
 # 获取证书
-sudo certbot certonly --standalone -d tc.bluse.me --email your-email@example.com --agree-tos
+sudo certbot certonly --standalone -d your-domain.com
 
-# 证书将保存在 /etc/letsencrypt/live/tc.bluse.me/
-
-# 复制证书到项目目录
-sudo mkdir -p certbot/conf
-sudo cp -r /etc/letsencrypt/* certbot/conf/
-sudo chown -R $USER:$USER certbot/
+# 复制证书
+sudo mkdir -p /data/image_bed/certbot
+sudo cp -r /etc/letsencrypt/* /data/image_bed/certbot/
 ```
 
-### 启用 HTTPS 配置
-
-```bash
-# 使用 HTTPS 配置
-rm nginx/conf.d/default.conf
-cp nginx/conf.d/default-https.conf.bak nginx/conf.d/default.conf
-
-# 或者直接恢复原始配置
-# mv nginx/conf.d/default-https.conf.bak nginx/conf.d/default.conf
-
-# 重启服务
-docker compose restart
-```
-
-### 自动续期证书
-
-```bash
-# 创建续期脚本
-cat > /root/renew-cert.sh << 'EOF'
-#!/bin/bash
-docker compose -f /root/image_bed/docker-compose.yml stop nginx
-certbot renew
-cp -r /etc/letsencrypt/* /root/image_bed/certbot/conf/
-docker compose -f /root/image_bed/docker-compose.yml start nginx
-EOF
-
-chmod +x /root/renew-cert.sh
-
-# 添加到 crontab (每月检查一次)
-crontab -e
-# 添加以下行
-0 3 1 * * /root/renew-cert.sh
-```
+更多配置说明请查看 [CONFIGURATION.md](CONFIGURATION.md)
 
 ---
 
-## 创建 API Token
+## 使用示例
 
-有两种方式创建 API Token:
+### Web 界面
 
-### 方法 1: 通过 Django Admin
-
-1. 访问 `https://tc.bluse.me/admin/`
-2. 使用超级管理员账号登录
-3. 进入 "Upload tokens" 页面
-4. 点击 "Add Upload Token"
-5. 输入名称（如 "我的 Token"）
-6. 保存后会自动生成 Token
-7. 复制 Token 用于上传
-
-### 方法 2: 通过命令行
-
-```bash
-docker compose exec web python manage.py shell
-
-# 在 Python Shell 中执行
-from imagehost.models import UploadToken
-token = UploadToken.objects.create(name="我的Token", token=UploadToken.generate_token())
-print(f"Token: {token.token}")
-exit()
-```
-
----
-
-## 使用指南
-
-### Web 界面上传
-
-1. 访问 `https://tc.bluse.me`
+1. 访问首页
 2. 输入 API Token
-3. 拖拽图片、点击上传或直接粘贴图片
-4. 复制生成的图片链接
+3. 拖拽/粘贴/选择图片上传
+4. 复制生成的链接
 
-### API 上传
-
-使用 curl 上传图片:
+### API 调用
 
 ```bash
-curl -X POST https://tc.bluse.me/api/upload/ \
+# 上传图片
+curl -X POST https://your-domain.com/api/upload/ \
   -H "X-API-Token: YOUR_TOKEN" \
-  -F "images=@/path/to/image.jpg"
+  -F "images=@image.jpg"
+
+# 响应示例
+{
+  "results": [
+    {
+      "filename": "image.jpg",
+      "url": "https://your-domain.com/i/20250101/abc123.jpg",
+      "size": 123.45,
+      "dimensions": "1920x1080"
+    }
+  ]
+}
 ```
 
-使用 Python 上传:
+### Python SDK
 
 ```python
 import requests
 
-url = "https://tc.bluse.me/api/upload/"
+url = "https://your-domain.com/api/upload/"
 headers = {"X-API-Token": "YOUR_TOKEN"}
 files = {"images": open("image.jpg", "rb")}
 
@@ -256,322 +184,144 @@ response = requests.post(url, headers=headers, files=files)
 print(response.json())
 ```
 
-### 查看图片库
-
-访问 `https://tc.bluse.me/gallery/?token=YOUR_TOKEN`
-
 ---
 
-## 维护命令
-
-### 查看日志
+## 管理命令
 
 ```bash
-# 查看所有日志
+# 查看日志
 docker compose logs -f
 
-# 查看特定服务日志
-docker compose logs -f web
-docker compose logs -f nginx
-```
-
-### 重启服务
-
-```bash
-# 重启所有服务
+# 重启服务
 docker compose restart
 
-# 重启特定服务
-docker compose restart web
-docker compose restart nginx
-```
+# 创建管理员
+docker compose exec web python manage.py createsuperuser
 
-### 更新代码
+# 生成 Token
+docker compose exec web python manage.py shell
+>>> from imagehost.models import UploadToken
+>>> token = UploadToken.objects.create(name="My Token", token=UploadToken.generate_token())
+>>> print(token.token)
 
-```bash
-# 拉取最新代码
-git pull  # 如果使用 Git
-
-# 重新构建并启动
-docker compose up -d --build
-```
-
-### 备份数据
-
-```bash
-# 备份数据库
-docker compose exec web python manage.py dumpdata > backup.json
-
-# 备份图片
-sudo tar -czf /root/image_backup_$(date +%Y%m%d).tar.gz /data
-
-# 备份到远程服务器
-rsync -avz /data user@backup-server:/backup/images/
-```
-
-### 清理磁盘空间
-
-```bash
-# 查看磁盘使用
-df -h /data
-
-# 清理 Docker 缓存
-docker system prune -a
-
-# 查看数据库大小
-du -sh image_bed/db.sqlite3
+# 备份数据
+tar -czf backup.tar.gz /data/image_bed
 ```
 
 ---
 
-## 性能优化
+## 文档
 
-### 1. 调整 Gunicorn Workers
-
-编辑 `Dockerfile` 中的 CMD:
-
-```dockerfile
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", ...]
-```
-
-推荐 workers 数量 = (CPU 核心数 × 2) + 1
-
-### 2. 启用 Redis 缓存 (可选)
-
-在 `docker-compose.yml` 中添加 Redis:
-
-```yaml
-services:
-  redis:
-    image: redis:alpine
-    restart: unless-stopped
-```
-
-### 3. 数据库优化
-
-考虑迁移到 PostgreSQL:
-
-```bash
-# 安装 PostgreSQL
-pip install psycopg2-binary
-
-# 修改 settings.py 中的 DATABASES 配置
-```
+- 📖 [完整文档](README.md) - 详细的使用和部署文档
+- ⚙️ [配置指南](CONFIGURATION.md) - 高级配置说明
+- 🚀 [快速开始](QUICKSTART.md) - 快速上手指南
+- 📝 [更新日志](CHANGELOG.md) - 版本变更记录
+- ✅ [部署检查清单](CHECKLIST.md) - 部署验证
 
 ---
 
-## 安全建议
+## 技术栈
 
-1. **使用强密码**: SECRET_KEY 和 API_TOKEN 必须足够复杂
-2. **定期更新**: 保持 Docker 镜像和系统更新
-3. **限制访问**: 使用防火墙限制不必要的端口访问
-4. **监控日志**: 定期检查访问日志，发现异常行为
-5. **备份数据**: 定期备份数据库和图片文件
-6. **HTTPS Only**: 生产环境必须使用 HTTPS
-7. **Rate Limiting**: 考虑添加速率限制防止滥用
-
----
-
-## 故障排查
-
-### 问题 1: 无法访问网站
-
-```bash
-# 检查容器状态
-docker compose ps
-
-# 检查端口占用
-sudo netstat -tlnp | grep :80
-sudo netstat -tlnp | grep :443
-
-# 检查 Nginx 日志
-docker compose logs nginx
-```
-
-### 问题 2: 上传失败
-
-```bash
-# 检查 /data 目录权限
-ls -la /data
-
-# 查看应用日志
-docker compose logs web
-
-# 检查磁盘空间
-df -h
-```
-
-### 问题 3: 图片无法显示
-
-```bash
-# 检查图片文件是否存在
-ls -la /data/
-
-# 检查 Nginx 配置
-docker compose exec nginx nginx -t
-
-# 查看 Nginx 错误日志
-docker compose logs nginx | grep error
-```
-
-### 问题 4: SSL 证书错误
-
-```bash
-# 检查证书文件
-sudo ls -la /etc/letsencrypt/live/tc.bluse.me/
-
-# 测试证书
-openssl s_client -connect tc.bluse.me:443
-
-# 续期证书
-sudo certbot renew --dry-run
-```
-
----
-
-## 环境变量说明
-
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| SECRET_KEY | Django 密钥 | 必须修改 |
-| DEBUG | 调试模式 | False |
-| ALLOWED_HOSTS | 允许的主机 | tc.bluse.me,localhost |
-| API_TOKEN | API Token | 必须设置 |
-| REQUIRE_AUTH | 是否需要认证 | True |
-| MAX_UPLOAD_SIZE | 最大上传大小(字节) | 10485760 (10MB) |
-| ENABLE_IMAGE_COMPRESSION | 启用图片压缩 | True |
-| COMPRESSION_QUALITY | 压缩质量(1-100) | 85 |
-| MAX_IMAGE_DIMENSION | 最大图片尺寸(像素) | 4096 |
+- **后端**: Django 4.2, Gunicorn
+- **前端**: 原生 HTML/CSS/JavaScript
+- **Web 服务器**: Nginx (Alpine)
+- **容器化**: Docker, Docker Compose
+- **图片处理**: Pillow
+- **数据库**: SQLite (可迁移到 PostgreSQL)
 
 ---
 
 ## 项目结构
 
 ```
-image_bed/
-├── image_bed/           # Django 项目配置
-│   ├── settings.py     # 设置文件
-│   ├── urls.py         # URL 路由
-│   └── wsgi.py         # WSGI 入口
+image-bed/
+├── image_bed/          # Django 项目配置
 ├── imagehost/          # 图床应用
-│   ├── models.py       # 数据模型
-│   ├── views.py        # 视图函数
-│   ├── urls.py         # URL 路由
-│   └── admin.py        # 管理后台
 ├── templates/          # HTML 模板
-│   ├── index.html      # 上传页面
-│   └── gallery.html    # 图片库页面
 ├── nginx/              # Nginx 配置
-│   ├── nginx.conf      # 主配置
-│   └── conf.d/         # 站点配置
+├── static/             # 静态文件
 ├── Dockerfile          # Docker 镜像
 ├── docker-compose.yml  # Docker Compose 配置
 ├── requirements.txt    # Python 依赖
-├── manage.py          # Django 管理脚本
-└── .env               # 环境变量
-```
-
----
-
-## API 文档
-
-### 上传图片
-
-**Endpoint**: `POST /api/upload/`
-
-**Headers**:
-```
-X-API-Token: YOUR_TOKEN
-```
-
-**Body** (multipart/form-data):
-```
-images: [file1, file2, ...]
-```
-
-**Response**:
-```json
-{
-  "results": [
-    {
-      "filename": "image.jpg",
-      "url": "https://tc.bluse.me/i/20250101/abcd1234.jpg",
-      "size": 123.45,
-      "dimensions": "1920x1080",
-      "duplicate": false
-    }
-  ],
-  "errors": []
-}
-```
-
-### 列出图片
-
-**Endpoint**: `GET /api/images/?page=1&per_page=20`
-
-**Headers**:
-```
-X-API-Token: YOUR_TOKEN
-```
-
-**Response**:
-```json
-{
-  "images": [...],
-  "pagination": {
-    "page": 1,
-    "per_page": 20,
-    "total": 100,
-    "pages": 5
-  }
-}
-```
-
-### 删除图片
-
-**Endpoint**: `POST /api/images/{id}/delete/`
-
-**Headers**:
-```
-X-API-Token: YOUR_TOKEN
+├── deploy.sh           # 一键部署脚本
+├── manage.sh           # 管理工具脚本
+└── docs/               # 文档
 ```
 
 ---
 
 ## 常见问题
 
-**Q: 如何修改最大上传大小?**
+### 无法访问网站？
 
-A: 修改 `.env` 文件中的 `MAX_UPLOAD_SIZE` (单位: 字节)，然后重启服务。
+```bash
+# 检查容器状态
+docker compose ps
 
-**Q: 如何禁用认证?**
+# 查看日志
+docker compose logs nginx
+docker compose logs web
+```
 
-A: 在 `.env` 中设置 `REQUIRE_AUTH=False`，但不推荐在生产环境这样做。
+### 上传失败？
 
-**Q: 如何迁移到新服务器?**
+```bash
+# 检查目录权限
+ls -la /data/image_bed/images/
 
-A:
-1. 备份 `/data` 目录
-2. 备份 `db.sqlite3` 数据库
-3. 复制 `.env` 配置文件
-4. 在新服务器上重新部署
-5. 恢复备份的数据
+# 检查磁盘空间
+df -h /data
+```
 
-**Q: 如何自定义域名?**
+### 域名配置？
 
-A: 修改 `.env` 中的 `ALLOWED_HOSTS` 和 `nginx/conf.d/default.conf` 中的 `server_name`。
+确保：
+1. DNS 解析到服务器 IP
+2. `.env` 中 `ALLOWED_HOSTS` 包含你的域名
+3. 防火墙开放 80 和 443 端口
+
+更多问题请查看 [完整文档](README.md)
 
 ---
 
-## 联系支持
+## 贡献
 
-如有问题，请检查:
-1. Docker 日志: `docker compose logs`
-2. Nginx 日志: `docker compose logs nginx`
-3. Django 日志: `docker compose logs web`
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
 ---
 
 ## 许可证
 
-MIT License
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 致谢
+
+- Django 框架
+- Pillow 图片处理库
+- Docker 容器技术
+- Nginx Web 服务器
+
+---
+
+## 联系方式
+
+- GitHub: [@cupid532](https://github.com/cupid532)
+- Issue: [提交问题](https://github.com/cupid532/image-bed/issues)
+
+---
+
+<div align="center">
+
+**如果这个项目对你有帮助，请给个 ⭐️ Star 支持一下！**
+
+Made with ❤️ by [cupid532](https://github.com/cupid532)
+
+</div>
