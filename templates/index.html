@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图床上传 - tc.bluse.me</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        {% if require_auth %}
+        .auth-section {
+            margin-bottom: 30px;
+        }
+
+        .auth-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .auth-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        {% endif %}
+
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f7fafc;
+            margin-bottom: 30px;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #a0aec0;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .result-item.success {
+            border-left: 4px solid #48bb78;
+        }
+
+        .result-item.error {
+            border-left: 4px solid #f56565;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-filename {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .result-url {
+            color: #4a5568;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .result-meta {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .copy-btn {
+            padding: 8px 16px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #3182ce;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .gallery-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .gallery-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .gallery-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📷 图床上传</h1>
+        <p class="subtitle">支持拖拽、粘贴上传，最大 {{ max_size_mb }}MB</p>
+
+        {% if require_auth %}
+        <div class="auth-section">
+            <input type="password" id="apiToken" placeholder="请输入 API Token" />
+        </div>
+        {% endif %}
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">拖拽图片到这里或点击上传</div>
+            <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式</div>
+            <input type="file" id="fileInput" multiple accept="image/*">
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+            <button class="btn btn-secondary" id="pasteBtn">粘贴上传 (Ctrl+V)</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>上传中...</div>
+        </div>
+
+        <div id="results" class="results"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="successCount">0</div>
+                <div class="stat-label">成功上传</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalSize">0 KB</div>
+                <div class="stat-label">总大小</div>
+            </div>
+        </div>
+
+        {% if require_auth %}
+        <div class="gallery-link">
+            <a href="#" onclick="goToGallery(); return false;">查看图片库</a>
+        </div>
+        {% else %}
+        <div class="gallery-link">
+            <a href="/gallery/">查看图片库</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        let successCount = 0;
+        let totalSize = 0;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const resultsDiv = document.getElementById('results');
+        const loadingDiv = document.getElementById('loading');
+        const requireAuth = {{ require_auth|lower }};
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Paste upload
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            const files = [];
+
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    files.push(item.getAsFile());
+                }
+            }
+
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            if (requireAuth) {
+                const token = document.getElementById('apiToken').value;
+                if (!token) {
+                    alert('请输入 API Token');
+                    return;
+                }
+            }
+
+            uploadFiles(Array.from(files));
+        }
+
+        async function uploadFiles(files) {
+            loadingDiv.style.display = 'block';
+            resultsDiv.innerHTML = '';
+
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('images', file);
+            });
+
+            if (requireAuth) {
+                formData.append('token', document.getElementById('apiToken').value);
+            }
+
+            try {
+                const response = await fetch('/api/upload/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: requireAuth ? {
+                        'X-API-Token': document.getElementById('apiToken').value
+                    } : {}
+                });
+
+                const data = await response.json();
+                loadingDiv.style.display = 'none';
+
+                if (data.results) {
+                    data.results.forEach(result => {
+                        addResult(result, 'success');
+                        successCount++;
+                        totalSize += parseFloat(result.size);
+                    });
+                }
+
+                if (data.errors) {
+                    data.errors.forEach(error => {
+                        addResult({ filename: error }, 'error');
+                    });
+                }
+
+                updateStats();
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                alert('上传失败: ' + error.message);
+            }
+        }
+
+        function addResult(result, type) {
+            const div = document.createElement('div');
+            div.className = `result-item ${type}`;
+
+            if (type === 'success') {
+                div.innerHTML = `
+                    <div class="result-info">
+                        <div class="result-filename">${result.filename}</div>
+                        <div class="result-url">${result.url}</div>
+                        <div class="result-meta">
+                            ${result.dimensions || ''} · ${result.size} KB
+                            ${result.duplicate ? ' · 已存在' : ''}
+                        </div>
+                    </div>
+                    <button class="copy-btn" onclick="copyUrl('${result.url}')">复制链接</button>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="result-info">
+                        <div class="result-filename" style="color: #f56565;">错误: ${result.filename}</div>
+                    </div>
+                `;
+            }
+
+            resultsDiv.insertBefore(div, resultsDiv.firstChild);
+        }
+
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('链接已复制到剪贴板');
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('totalSize').textContent = totalSize.toFixed(2) + ' KB';
+        }
+
+        function goToGallery() {
+            const token = document.getElementById('apiToken').value;
+            if (!token) {
+                alert('请输入 API Token');
+                return;
+            }
+            window.location.href = `/gallery/?token=${token}`;
+        }
+    </script>
+</body>
+</html>
