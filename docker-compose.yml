@@ -6,7 +6,7 @@ services:
     container_name: image_bed
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "7773:8000"  # Changed from 8000 to 7773 to avoid port conflicts
     volumes:
       - /data/image_bed/images:/data/images
       - /data/image_bed/db:/app/db
