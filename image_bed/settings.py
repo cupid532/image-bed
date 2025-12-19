@@ -112,10 +112,21 @@ API_TOKEN = os.getenv('API_TOKEN', '')
 REQUIRE_AUTH = os.getenv('REQUIRE_AUTH', 'True') == 'True'
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host not in ['localhost', '127.0.0.1']]
+# Support both HTTPS domains and HTTP IP addresses with ports
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    # Skip localhost entries
+    if host in ['localhost', '127.0.0.1']:
+        continue
+    # Add both HTTP and HTTPS for domains and IPs
+    CSRF_TRUSTED_ORIGINS.append(f'http://{host}')
+    CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
 
 # Security settings for production
-if not DEBUG:
+# Allow disabling HTTPS redirect for IP-based deployments
+FORCE_HTTPS = os.getenv('FORCE_HTTPS', 'True') == 'True'
+
+if not DEBUG and FORCE_HTTPS:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
