@@ -19,6 +19,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
+    'simpleui',  # Django Admin UI theme
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -132,3 +133,27 @@ if not DEBUG and FORCE_HTTPS:
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Simpleui Configuration
+SIMPLEUI_CONFIG = {
+    'system_keep': False,
+    'menu_display': ['图片托管', '认证和授权'],
+    'dynamic': True,
+    'menus': [{
+        'name': '图床管理',
+        'icon': 'fas fa-images',
+        'models': [{
+            'name': '图片',
+            'icon': 'fas fa-image',
+            'url': 'imagehost/image/'
+        }, {
+            'name': 'API Token',
+            'icon': 'fas fa-key',
+            'url': 'imagehost/uploadtoken/'
+        }]
+    }]
+}
+
+SIMPLEUI_HOME_INFO = False
+SIMPLEUI_ANALYSIS = False
+SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
