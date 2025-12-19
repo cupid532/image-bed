@@ -9,7 +9,7 @@ from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
-def generate_filename(filename):
+def generate_filename(instance, filename):
     """Generate unique filename based on hash and timestamp"""
     ext = os.path.splitext(filename)[1].lower()
     timestamp = datetime.now().strftime('%Y%m%d')
