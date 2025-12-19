@@ -111,7 +111,17 @@ MAX_IMAGE_DIMENSION = int(os.getenv('MAX_IMAGE_DIMENSION', 4096))
 
 # API Token settings
 API_TOKEN = os.getenv('API_TOKEN', '')
-REQUIRE_AUTH = os.getenv('REQUIRE_AUTH', 'True') == 'True'
+REQUIRE_AUTH = os.getenv('REQUIRE_AUTH', 'False') == 'True'  # Changed default to False
+ALLOW_GUEST_UPLOAD = os.getenv('ALLOW_GUEST_UPLOAD', 'True') == 'True'
+
+# Domain settings
+SITE_DOMAIN = os.getenv('SITE_DOMAIN', '')  # Main site domain (e.g., example.com)
+IMAGE_DOMAIN = os.getenv('IMAGE_DOMAIN', '')  # Image CDN domain (optional, defaults to SITE_DOMAIN)
+
+# Use SITE_DOMAIN for LOGIN_URL if configured
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 # CSRF settings
 # Support both HTTPS domains and HTTP IP addresses with ports

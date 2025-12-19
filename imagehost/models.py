@@ -1,9 +1,10 @@
 import os
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
 from PIL import Image as PILImage
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -20,6 +21,16 @@ def generate_filename(instance, filename):
 class Image(models.Model):
     """Image model for storing uploaded images"""
 
+    # User relationship
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='images',
+        help_text="User who uploaded the image. Null for guest uploads."
+    )
+
     # File information
     image = models.ImageField(upload_to=generate_filename, max_length=255)
     original_filename = models.CharField(max_length=255)
@@ -34,6 +45,18 @@ class Image(models.Model):
     # Metadata
     upload_ip = models.GenericIPAddressField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    # Guest mode and expiration
+    is_temporary = models.BooleanField(
+        default=False,
+        help_text="Temporary images uploaded by guests will be deleted after 24 hours"
+    )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Expiration time for temporary images"
+    )
 
     # Statistics
     view_count = models.IntegerField(default=0)
@@ -68,6 +91,19 @@ class Image(models.Model):
         """Increment view count"""
         self.view_count += 1
         self.save(update_fields=['view_count'])
+
+    def set_as_temporary(self, hours=24):
+        """Set image as temporary with expiration time"""
+        self.is_temporary = True
+        self.expires_at = datetime.now() + timedelta(hours=hours)
+        self.save(update_fields=['is_temporary', 'expires_at'])
+
+    @property
+    def is_expired(self):
+        """Check if temporary image has expired"""
+        if not self.is_temporary or not self.expires_at:
+            return False
+        return datetime.now() > self.expires_at
 
     @staticmethod
     def calculate_hash(file_content):

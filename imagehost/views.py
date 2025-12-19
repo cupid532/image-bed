@@ -19,18 +19,39 @@ def get_client_ip(request):
     return ip
 
 
-def get_full_url(request, path):
-    """Generate full URL from request and path"""
+def get_full_url(request, path, use_image_domain=False):
+    """
+    Generate full URL from request and path
+    Args:
+        request: Django request object
+        path: URL path
+        use_image_domain: If True, use IMAGE_DOMAIN instead of SITE_DOMAIN
+    """
+    # Check if custom domain is configured
+    if use_image_domain and settings.IMAGE_DOMAIN:
+        domain = settings.IMAGE_DOMAIN
+    elif settings.SITE_DOMAIN:
+        domain = settings.SITE_DOMAIN
+    else:
+        # Fall back to request host
+        domain = request.get_host()
+
+    # Determine scheme
     scheme = 'https' if request.is_secure() else 'http'
-    host = request.get_host()
-    return f"{scheme}://{host}{path}"
+
+    return f"{scheme}://{domain}{path}"
 
 
 def token_required(view_func):
-    """Decorator to check API token authentication"""
+    """Decorator to check API token authentication or user login"""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if not settings.REQUIRE_AUTH:
+        # If user is authenticated, allow access
+        if request.user.is_authenticated:
+            return view_func(request, *args, **kwargs)
+
+        # If guest uploads are allowed and no auth required, allow access
+        if not settings.REQUIRE_AUTH and getattr(settings, 'ALLOW_GUEST_UPLOAD', True):
             return view_func(request, *args, **kwargs)
 
         # Check for token in header or query parameter
@@ -52,10 +73,13 @@ def token_required(view_func):
 
 def index(request):
     """Home page with upload interface"""
-    return render(request, 'index.html', {
+    context = {
         'require_auth': settings.REQUIRE_AUTH,
-        'max_size_mb': settings.MAX_UPLOAD_SIZE / (1024 * 1024)
-    })
+        'max_size_mb': settings.MAX_UPLOAD_SIZE / (1024 * 1024),
+        'user': request.user if request.user.is_authenticated else None,
+        'allow_guest': getattr(settings, 'ALLOW_GUEST_UPLOAD', True),
+    }
+    return render(request, 'index.html', context)
 
 
 def gallery(request):
@@ -124,7 +148,7 @@ def upload_image(request):
                 if existing_image:
                     results.append({
                         'filename': image_file.name,
-                        'url': get_full_url(request, existing_image.url),
+                        'url': get_full_url(request, existing_image.url, use_image_domain=True),
                         'size': existing_image.size_kb,
                         'duplicate': True
                     })
@@ -154,9 +178,14 @@ def upload_image(request):
                     width=width,
                     height=height,
                     mime_type=image_file.content_type,
-                    upload_ip=get_client_ip(request)
+                    upload_ip=get_client_ip(request),
+                    user=request.user if request.user.is_authenticated else None
                 )
                 image.save()
+
+                # Set as temporary if uploaded by guest
+                if not request.user.is_authenticated:
+                    image.set_as_temporary(hours=24)
 
                 # Record token usage
                 if hasattr(request, 'upload_token'):
@@ -164,7 +193,7 @@ def upload_image(request):
 
                 results.append({
                     'filename': image_file.name,
-                    'url': get_full_url(request, image.url),
+                    'url': get_full_url(request, image.url, use_image_domain=True),
                     'size': image.size_kb,
                     'dimensions': f"{width}x{height}",
                     'duplicate': False
@@ -201,7 +230,7 @@ def list_images(request):
                 {
                     'id': img.id,
                     'filename': img.original_filename,
-                    'url': get_full_url(request, img.url),
+                    'url': get_full_url(request, img.url, use_image_domain=True),
                     'size': img.size_kb,
                     'dimensions': f"{img.width}x{img.height}",
                     'views': img.view_count,

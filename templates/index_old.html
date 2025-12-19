@@ -15,149 +15,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding-bottom: 40px;
-        }
-
-        /* 导航栏 */
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: 600;
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #666;
-            font-size: 14px;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #667eea;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 8px 15px;
-            border-radius: 20px;
-        }
-
-        .user-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: 600;
+            padding: 20px;
         }
 
-        .user-email {
-            font-size: 13px;
-            color: #333;
-        }
-
-        /* 游客模式提示 */
-        .guest-notice {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 15px 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .notice-icon {
-            font-size: 24px;
-            margin-right: 15px;
-        }
-
-        .notice-content {
-            flex: 1;
-        }
-
-        .notice-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .notice-text {
-            font-size: 13px;
-            color: #666;
-        }
-
-        .notice-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .notice-btn {
-            padding: 6px 15px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .notice-btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .notice-btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
-        }
-
-        .notice-btn-secondary {
-            background: #f8f9fa;
-            color: #667eea;
-            border: 1px solid #667eea;
-        }
-
-        .notice-btn-secondary:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        /* 主容器 */
         .container {
             background: white;
             border-radius: 16px;
@@ -165,7 +28,6 @@
             padding: 40px;
             max-width: 800px;
             width: 100%;
-            margin: 30px auto;
         }
 
         h1 {
@@ -181,6 +43,26 @@
             margin-bottom: 30px;
             font-size: 14px;
         }
+
+        {% if require_auth %}
+        .auth-section {
+            margin-bottom: 30px;
+        }
+
+        .auth-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .auth-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        {% endif %}
 
         .upload-area {
             border: 3px dashed #cbd5e0;
@@ -227,7 +109,7 @@
         .btn {
             display: inline-block;
             padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
             border: none;
             border-radius: 8px;
@@ -235,10 +117,10 @@
             cursor: pointer;
             transition: all 0.3s;
             margin: 10px 5px;
-            font-weight: 500;
         }
 
         .btn:hover {
+            background: #5568d3;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
@@ -269,18 +151,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .result-item.success {
@@ -296,7 +166,7 @@
         }
 
         .result-filename {
-            font-weight: 600;
+            font-weight: bold;
             color: #2d3748;
             margin-bottom: 5px;
         }
@@ -327,7 +197,6 @@
 
         .copy-btn:hover {
             background: #3182ce;
-            transform: translateY(-1px);
         }
 
         .loading {
@@ -385,82 +254,24 @@
             color: #667eea;
             text-decoration: none;
             font-size: 14px;
-            font-weight: 500;
         }
 
         .gallery-link a:hover {
             text-decoration: underline;
         }
-
-        @media (max-width: 768px) {
-            .nav-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .guest-notice {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .notice-icon {
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
-
-            .notice-actions {
-                margin-top: 10px;
-                width: 100%;
-                flex-direction: column;
-            }
-
-            .notice-btn {
-                width: 100%;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">图床系统</a>
-            <div class="nav-links">
-                <a href="/gallery/">图片库</a>
-                {% if user %}
-                <div class="user-info">
-                    <div class="user-avatar">{{ user.email.0|upper }}</div>
-                    <span class="user-email">{{ user.email }}</span>
-                </div>
-                <a href="/profile/">个人中心</a>
-                <a href="/auth/logout/">退出</a>
-                {% else %}
-                <a href="/login/">登录</a>
-                <a href="/register/">注册</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <!-- 游客模式提示 -->
-    {% if not user %}
-    <div class="guest-notice">
-        <div class="notice-icon">⏰</div>
-        <div class="notice-content">
-            <div class="notice-title">您正在以游客身份使用</div>
-            <div class="notice-text">游客上传的图片将在24小时后自动删除。注册后您的图片将永久保存！</div>
-        </div>
-        <div class="notice-actions">
-            <a href="/register/" class="notice-btn notice-btn-primary">立即注册</a>
-            <a href="/login/" class="notice-btn notice-btn-secondary">登录</a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- 主要内容 -->
     <div class="container">
         <h1>📷 图床上传</h1>
         <p class="subtitle">支持拖拽、粘贴上传，最大 {{ max_size_mb }}MB</p>
+
+        {% if require_auth %}
+        <div class="auth-section">
+            <input type="password" id="apiToken" placeholder="请输入 API Token（自动保存）" />
+            <button class="btn-clear" onclick="clearToken()" title="清除保存的 Token">🗑️</button>
+        </div>
+        {% endif %}
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
@@ -492,9 +303,15 @@
             </div>
         </div>
 
+        {% if require_auth %}
         <div class="gallery-link">
-            <a href="/gallery/">查看图片库 →</a>
+            <a href="#" onclick="goToGallery(); return false;">查看图片库</a>
         </div>
+        {% else %}
+        <div class="gallery-link">
+            <a href="/gallery/">查看图片库</a>
+        </div>
+        {% endif %}
     </div>
 
     <script>
@@ -505,6 +322,32 @@
         const fileInput = document.getElementById('fileInput');
         const resultsDiv = document.getElementById('results');
         const loadingDiv = document.getElementById('loading');
+        const requireAuth = {{ require_auth|lower }};
+        const apiTokenInput = document.getElementById('apiToken');
+
+        // Load saved token from localStorage on page load
+        if (requireAuth && apiTokenInput) {
+            const savedToken = localStorage.getItem('imagebed_api_token');
+            if (savedToken) {
+                apiTokenInput.value = savedToken;
+            }
+
+            // Save token to localStorage when user inputs it
+            apiTokenInput.addEventListener('input', () => {
+                const token = apiTokenInput.value.trim();
+                if (token) {
+                    localStorage.setItem('imagebed_api_token', token);
+                }
+            });
+
+            // Also save on blur
+            apiTokenInput.addEventListener('blur', () => {
+                const token = apiTokenInput.value.trim();
+                if (token) {
+                    localStorage.setItem('imagebed_api_token', token);
+                }
+            });
+        }
 
         // Click to upload
         uploadArea.addEventListener('click', () => {
@@ -550,6 +393,15 @@
 
         function handleFiles(files) {
             if (files.length === 0) return;
+
+            if (requireAuth) {
+                const token = document.getElementById('apiToken').value;
+                if (!token) {
+                    alert('请输入 API Token');
+                    return;
+                }
+            }
+
             uploadFiles(Array.from(files));
         }
 
@@ -562,10 +414,17 @@
                 formData.append('images', file);
             });
 
+            if (requireAuth) {
+                formData.append('token', document.getElementById('apiToken').value);
+            }
+
             try {
                 const response = await fetch('/api/upload/', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: requireAuth ? {
+                        'X-API-Token': document.getElementById('apiToken').value
+                    } : {}
                 });
 
                 const data = await response.json();
@@ -598,7 +457,6 @@
             div.className = `result-item ${type}`;
 
             if (type === 'success') {
-                const expireHint = {{ user|yesno:"'','<br><span style=\"color: #f59e0b; font-size: 11px;\">⚠️ 游客上传，24小时后自动删除</span>'" }};
                 div.innerHTML = `
                     <div class="result-info">
                         <div class="result-filename">${result.filename}</div>
@@ -606,7 +464,6 @@
                         <div class="result-meta">
                             ${result.dimensions || ''} · ${result.size} KB
                             ${result.duplicate ? ' · 已存在' : ''}
-                            ${expireHint}
                         </div>
                     </div>
                     <button class="copy-btn" onclick="copyUrl('${result.url}')">复制链接</button>
@@ -623,13 +480,15 @@
         }
 
         function copyUrl(url) {
+            // Try modern clipboard API first
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(url).then(() => {
-                    showCopySuccess();
+                    alert('链接已复制到剪贴板');
                 }).catch(() => {
                     fallbackCopy(url);
                 });
             } else {
+                // Fallback for HTTP and older browsers
                 fallbackCopy(url);
             }
         }
@@ -644,37 +503,25 @@
             textarea.select();
             try {
                 document.execCommand('copy');
-                showCopySuccess();
+                alert('链接已复制到剪贴板');
             } catch (err) {
                 alert('复制失败，请手动复制: ' + text);
             }
             document.body.removeChild(textarea);
         }
 
-        function showCopySuccess() {
-            const toast = document.createElement('div');
-            toast.innerHTML = '✓ 链接已复制';
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #48bb78;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                z-index: 10000;
-                animation: slideInRight 0.3s ease-out;
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.remove();
-            }, 2000);
-        }
-
         function updateStats() {
             document.getElementById('successCount').textContent = successCount;
             document.getElementById('totalSize').textContent = totalSize.toFixed(2) + ' KB';
+        }
+
+        function goToGallery() {
+            const token = document.getElementById('apiToken').value;
+            if (!token) {
+                alert('请输入 API Token');
+                return;
+            }
+            window.location.href = `/gallery/?token=${token}`;
         }
     </script>
 </body>
