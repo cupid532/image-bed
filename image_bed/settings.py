@@ -138,7 +138,7 @@ if not DEBUG and FORCE_HTTPS:
 # Simpleui Configuration
 SIMPLEUI_CONFIG = {
     'system_keep': False,
-    'menu_display': ['图片托管', '认证和授权'],
+    'menu_display': ['图床管理', '认证和授权'],
     'dynamic': True,
     'menus': [{
         'name': '图床管理',
@@ -146,11 +146,11 @@ SIMPLEUI_CONFIG = {
         'models': [{
             'name': '图片',
             'icon': 'fas fa-image',
-            'url': 'imagehost/image/'
+            'url': '/admin/imagehost/image/'
         }, {
             'name': 'API Token',
             'icon': 'fas fa-key',
-            'url': 'imagehost/uploadtoken/'
+            'url': '/admin/imagehost/uploadtoken/'
         }]
     }]
 }
